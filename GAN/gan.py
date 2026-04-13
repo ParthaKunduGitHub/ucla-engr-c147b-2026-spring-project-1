@@ -35,12 +35,21 @@ class Discriminator(nn.Module):
 
         ##############################################################################
         # TODO: Implement architecture                                               #
-        #                                                                            #
+        # #Fully connected layer with input size 784 and output size 256
+        #LeakyReLU with alpha 0.
+        #Fully connected layer with input_size 256 and output size 256
+        #LeakyReLU with alpha 0.01
+        #Fully connected layer with input size 256 and output size 1                                                                           #
         # HINT: nn.Sequential might be helpful. You'll start by calling nn.Flatten()#
         ##############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        self.model = None
+        self.model = nn.Sequential(nn.Flatten(),
+                                    nn.Linear(in_features = 784,out_features = 256),
+                                   nn.LeakyReLU(negative_slope = 0),
+                                   nn.Linear(in_features = 256, out_features = 256),
+                                   nn.LeakyReLU(negative_slope = 0.01),
+                                   nn.Linear(in_features = 256, out_features = 1))
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ##############################################################################
@@ -63,7 +72,12 @@ class Generator(nn.Module):
         ##############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        self.model = None
+        self.model = nn.Sequential(nn.Linear(in_features = self.noise_dim,out_features = 1024),
+                                   nn.ReLU(),
+                                   nn.Linear(in_features = 1024, out_features = 1024),
+                                   nn.ReLU(),
+                                   nn.Linear(in_features = 1024, out_features = 784),
+                                   nn.Tanh())
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ##############################################################################
@@ -106,8 +120,8 @@ def discriminator_loss(logits_real: Tensor, logits_fake: Tensor) -> Tensor:
     """
     loss = None
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
+    loss = bce_loss(logits_fake,torch.zeros_like(logits_fake)) \
+    + bce_loss(logits_real,torch.ones_like(logits_real))
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     return loss
@@ -129,7 +143,8 @@ def generator_loss(logits_fake: Tensor) -> Tensor:
     loss = None
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    loss = bce_loss(logits_fake,torch.ones_like(logits_fake))
+
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     return loss
@@ -156,8 +171,8 @@ def ls_discriminator_loss(scores_real: Tensor, scores_fake: Tensor) -> Tensor:
     """
     loss = None
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
+  
+    loss = 0.5*torch.mean(torch.square(scores_real-1)) + 0.5*torch.mean(torch.square(scores_fake))
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     return loss
@@ -176,7 +191,7 @@ def ls_generator_loss(scores_fake: Tensor) -> Tensor:
     loss = None
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    loss = 0.5*torch.mean(torch.square(scores_fake-1))
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     return loss
@@ -190,10 +205,27 @@ class DCDiscriminator(nn.Module):
         # TODO: Implement architecture                                               #
         #                                                                            #
         # HINT: nn.Sequential might be helpful.                                      #
+
+        
+
+        
         ##############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        self.model = None
+        self.model = nn.Sequential(nn.Conv2d(in_channels = 1, out_channels = 32, kernel_size = 5, stride=1),
+                                   nn.LeakyReLU(negative_slope= 0.01), nn.MaxPool2d(kernel_size = 2, stride = 2),
+                                   nn.Conv2d(in_channels = 32, out_channels = 64, kernel_size = 5, stride=1),
+                                   nn.LeakyReLU(negative_slope=0.01),nn.MaxPool2d(kernel_size=2,stride=2),
+                                   nn.Flatten(),
+                                   nn.Linear(in_features = 1024,out_features = 1024),
+                                   nn.LeakyReLU(negative_slope=0.01),
+                                   nn.Linear(in_features=1024,out_features=1))
+                                
+
+                                   
+    
+
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ##############################################################################
@@ -216,7 +248,18 @@ class DCGenerator(nn.Module):
         ##############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        self.model = None
+        self.model = nn.Sequential(nn.Linear(in_features = self.noise_dim, out_features=1024),
+                                   nn.ReLU(),nn.BatchNorm1d(num_features=1024),
+                                   nn.Linear(in_features=1024,out_features=6272),
+                                   nn.ReLU(),nn.BatchNorm1d(num_features=6272),
+                                   nn.Unflatten(1,(128,7,7)),
+                                   nn.ConvTranspose2d(in_channels=128,out_channels=64,
+                                                      kernel_size = 4,stride=2,padding=1),
+                                   nn.ReLU(),nn.BatchNorm2d(num_features=64),
+                                   nn.ConvTranspose2d(in_channels=64,out_channels=1,kernel_size = 4,
+                                                      stride=2,padding=1),
+                                   nn.Tanh(),nn.Flatten())
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ##############################################################################
